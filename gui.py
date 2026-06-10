@@ -483,7 +483,7 @@ class UsersTab(ttk.Frame):
     def _toggle(self):
         if self.bind_type.get() == "employee":
             self.emp_map = load_combobox(self.bind_combo, services.get_employees(self.database),
-                                         lambda e: '{e["surname"]} {e["name"]}', lambda e: e["employee_id"])
+                                         lambda e: f'{e["surname"]} {e["name"]}', lambda e: e["employee_id"])
         else:
             self.cli_map = load_combobox(self.bind_combo, services.get_clients(self.database),
                                          lambda c: f'{c["surname"]} {c["name"]}', lambda c: c["client_id"])
