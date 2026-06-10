@@ -1,0 +1,143 @@
+CREATE TABLE Pet_types (
+    type_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Breeds (
+    breed_id SERIAL PRIMARY KEY,
+    pet_type_id INT REFERENCES Pet_types(type_id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE Services (
+    service_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    price DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE Suppliers (
+    supplier_id SERIAL PRIMARY KEY,
+    company_name VARCHAR(200) NOT NULL UNIQUE,
+    phone VARCHAR(20) NOT NULL UNIQUE
+);
+
+CREATE TABLE Items (
+    item_id SERIAL PRIMARY KEY,
+    supplier_id INT REFERENCES Suppliers(supplier_id) ON DELETE SET NULL,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    price DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(50),
+    stock INT DEFAULT 0
+);
+
+CREATE TABLE Positions (
+    position_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Employees (
+    employee_id SERIAL PRIMARY KEY,
+    position_id INT REFERENCES Positions(position_id) ON DELETE SET NULL,
+    name VARCHAR(30) NOT NULL,
+    surname VARCHAR(30) NOT NULL,
+    third_name VARCHAR(30),
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(255)
+);
+
+CREATE TABLE Clients (
+    client_id SERIAL PRIMARY KEY,
+    name VARCHAR(30) NOT NULL,
+    surname VARCHAR(30) NOT NULL,
+    third_name VARCHAR(30),
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(255)
+);
+
+CREATE TABLE Users (
+    user_id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES Employees(employee_id) ON DELETE SET NULL,
+    client_id INT REFERENCES Clients(client_id) ON DELETE SET NULL,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(10) NOT NULL CHECK (role IN ('admin', 'doctor', 'client')),
+    CHECK (
+        (employee_id IS NOT NULL AND client_id IS NULL) OR
+        (client_id IS NULL AND employee_id IS NOT NULL)
+    )
+);
+
+CREATE TABLE Pets (
+    pet_id SERIAL PRIMARY KEY,
+    breed_id INT REFERENCES Breeds(breed_id),
+    name VARCHAR(100) NOT NULL,
+    gender VARCHAR(1) NOT NULL,
+    color VARCHAR(50),
+    birth_date DATE
+);
+
+CREATE TABLE Client_pets (
+    client_pet_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
+    pet_id INT REFERENCES Pets(pet_id) ON DELETE CASCADE,
+    is_owner BOOLEAN DEFAULT TRUE,
+    UNIQUE(client_id, pet_id)
+);
+
+CREATE TABLE Appointments (
+    appointment_id SERIAL PRIMARY KEY,
+    pet_id INT REFERENCES Pets(pet_id),
+    employee_id INT REFERENCES Employees(employee_id) ON DELETE SET NULL,
+    appointment_date TIMESTAMP NOT NULL,
+    status VARCHAR(50) NOT NULL CHECK (status IN ('запланирован', 'завершён', 'отменён')) DEFAULT 'запланирован'
+);
+
+CREATE TABLE Ward_rooms (
+    room_id SERIAL PRIMARY KEY,
+    room_number VARCHAR(10) NOT NULL UNIQUE,
+    price_per_day DECIMAL(10,2),
+    is_available BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE Hospitalizations (
+    hospitalization_id SERIAL PRIMARY KEY,
+    pet_id INT REFERENCES Pets(pet_id) ON DELETE CASCADE,
+    employee_id INT REFERENCES Employees(employee_id) ON DELETE SET NULL,
+    ward_room_id INT REFERENCES Ward_rooms(room_id) ON DELETE CASCADE,
+    admission_date DATE NOT NULL,
+    discharge_date DATE,
+    status VARCHAR(50) CHECK (status IN ('активна', 'отменена', 'завершена')) DEFAULT 'активна'
+);
+
+CREATE TABLE Medical_records (
+    record_id SERIAL PRIMARY KEY,
+    appointment_id INT REFERENCES Appointments(appointment_id) ON DELETE CASCADE,
+    hospitalization_id INT REFERENCES Hospitalizations(hospitalization_id) ON DELETE CASCADE,
+    reason TEXT,
+    diagnosis TEXT,
+    temperature DECIMAL(4,1),
+    weight DECIMAL(5,2),
+    recommendations TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    CHECK (
+        (appointment_id IS NOT NULL AND hospitalization_id IS NULL) OR
+        (appointment_id IS NULL AND hospitalization_id IS NOT NULL)
+    )
+);
+
+CREATE TABLE Appointment_services (
+    appointment_service_id SERIAL PRIMARY KEY,
+    appointment_id INT REFERENCES Appointments(appointment_id) ON DELETE CASCADE,
+    service_id INT REFERENCES Services(service_id),
+    quantity INT NOT NULL DEFAULT 1,
+    price DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE Appointment_items (
+    appointment_item_id SERIAL PRIMARY KEY,
+    appointment_id INT REFERENCES Appointments(appointment_id) ON DELETE CASCADE,
+    item_id INT REFERENCES Items(item_id),
+    quantity INT NOT NULL DEFAULT 1,
+    dosage VARCHAR(100),
+    price DECIMAL(10,2) NOT NULL
+);
