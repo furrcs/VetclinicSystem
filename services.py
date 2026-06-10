@@ -60,7 +60,7 @@ def get_pets_by_client(database, client_id):
         FROM Client_pets
         JOIN Pets USING(pet_id)
         JOIN Breeds USING(breed_id)
-        WHERE Clients_pets.client_id = %s
+        WHERE Client_pets.client_id = %s
     """
     return database.query(sql, (client_id,))
 
